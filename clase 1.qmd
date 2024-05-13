@@ -1,0 +1,145 @@
+---
+title: "mtcars"
+format: pdf
+editor: visual
+---
+
+```{r}
+data("mtcars")
+
+```
+
+```{r}
+head(mtcars,10)
+```
+
+```{r}
+str(mtcars)
+```
+
+```{r}
+summary(mtcars)
+```
+
+```{r}
+subconjunto = mtcars[, 1:7]
+p <- ncol(subconjunto) 
+n <- nrow(subconjunto)
+vectormedias = colMeans(subconjunto) 
+vectormedias
+
+S= cov(subconjunto)
+S
+```
+
+## Varianza total 
+
+```{r}
+VT<-sum(diag(S))
+VT
+```
+
+## Varianza media
+
+```{r}
+VM<-VT/p
+VM
+```
+
+## Varianza generalizada 
+
+```{r}
+VG<-det(S)
+VG
+```
+
+## Desviación Generalizada
+
+```{r}
+DG<-(VG)^(1/2)
+
+DG
+```
+
+## Varianza efectiva :
+
+```{r}
+VE<-(VG)^(1/p)
+
+VE
+```
+
+## Desviación promedio:
+
+```{r}
+DP <- (VG)^(1/(2*p))
+
+DP
+```
+
+# Distancia de Mahalanobis
+
+```{r}
+x<-as.matrix(subconjunto)
+
+media<-colMeans(subconjunto)
+
+matriz.media<-matrix(media,nrow = n,ncol=p,byrow = TRUE)
+
+SI<-solve(S)
+
+distm<-((x-matriz.media)%*%SI)%*%t((x-matriz.media))
+```
+
+```{r}
+#distm
+
+R = round(cor(subconjunto),2) 
+
+R
+```
+
+```{r}
+attach(subconjunto)
+cor.test(disp, cyl+hp+wt + mpg + drat +qsec)
+
+ajuste<-lm(disp~ cyl + hp + wt+ mpg + drat +qsec,
+           data=subconjunto)
+summary(ajuste)
+
+```
+
+```{r}
+#install.packages("ppcor")
+library(ppcor)
+## Loading required package: MASS
+Rp<- pcor(subconjunto)
+Rp
+```
+
+## coeficientes
+
+```{r}
+#Coeficiente de dependencia
+CD= det(R)
+CD
+
+#Dependencia Global
+DRp = 1- (CD)^ 1/(p-1)
+DRp
+
+#Coeficiente de correlación promedio
+CCP = sqrt(DRp)
+CCP
+
+#Matriz de precisión (se calculó anteriormente para Mahalanobis)
+SI
+```
+
+```{r}
+
+## Warning: package 'ppcor' is in use and will not be installed
+AnalisisMultivariado <- function(datos){
+  n <- nrow(datos)
+  p <- ncol(datos)
+```
