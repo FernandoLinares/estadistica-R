@@ -1,0 +1,128 @@
+---
+title: "analisis de outlier"
+format: pdf
+editor: visual
+---
+
+\tableofcontents
+
+\newpage
+
+\section{Analisis de outlier}
+
+# Analisis de outlier
+
+## **Datos anatómicos de gatos domésticos.**
+
+### *Descripción:* Los pesos del corazón y del cuerpo de muestras de gatos machos y hembras utilizados para experimentos *con digital*. Todos los gatos eran adultos y pesaban más de 2 kg. *Uso:* cats. *Formato:* Este marco de datos contiene las siguientes columnas:
+
+#### Sex: sexo: Factor con niveles "F" y "M".
+
+#### Bwt: peso corporal en kg.
+
+#### Hwt: peso del corazón en g.
+
+```{r}
+library(MASS)
+data("cats")
+head(cats)
+```
+
+```{r}
+datos = data.frame(peso_corporal=log(cats$Bwt),
+                   peso_corazon=log(cats$Hwt))
+head(datos,10)
+
+```
+
+```{r}
+summary(datos)
+```
+
+## Grafica de caja y bigote.
+
+```{r}
+boxplot(datos ,main= "Datos anatomicos de gatos domesticos", col = rainbow(ncol(datos)))
+```
+
+#### En el diagrama de cajas y bigotes se observa que solamente hay un valor atípico univariado en el peso del corazón, en todo lo demás no hay valores atípicos, pero hace falta ver si hay valores atípicos en el entorno multivariante.
+
+## Grafico de dispersion.
+
+```{r}
+library(ggplot2)
+attach(datos)
+ggplot(datos, aes(x=peso_corporal, y=peso_corazon))+ geom_point()
+
+```
+
+#### Al crear el grafico de dispersión se puede observar que hay dos valores atípicos multivariados. Pero no están tan separados de los demás datos por lo que debemos detectar los valores atípicos estimando correctamente la estructura de covarianza.
+
+## Elipsoide de tolerancia basado en la distancia de Mahalanobis.
+
+```{r}
+cats.clcenter=colMeans(datos)
+cats.clcov=cov(datos)
+
+radio=sqrt(qchisq(0.975, df= ncol(datos)))
+```
+
+```{r}
+library(car)
+
+ellipse.cl=data.frame(ellipse(center = cats.clcenter,
+                              shape =cats.clcov,radius = radio,
+                              segments = 100,draw = FALSE))
+colnames(ellipse.cl)=colnames(datos)
+ggplot(data=datos,mapping=aes(x=peso_corporal, y=peso_corazon))+geom_point()+
+  geom_polygon(data=ellipse.cl,color= "dodgerblue",fill= "dodgerblue",
+               alpha=0.2)+ geom_point(aes(x=cats.clcenter[1],
+                                          y=cats.clcenter[2]),
+                                      color="blue", size=6)
+```
+
+#### Se observa que hay dos datos que son atipicos en la grafica, esto se debe a que hay dos especies de gatos que tienen medidas diferentes a los demas.
+
+```{r}
+library(robustbase)
+cats.mcd=covMcd(datos)
+cats.mcd
+
+cats.mcd$center #Estimación robusta de ubicación
+
+cats.mcd$cov
+```
+
+```{r}
+#Construimos el elipsoide de tolerancia robusto.
+ellipse.mcd=data.frame(ellipse(center=cats.mcd$center,
+                               shape=cats.mcd$cov,
+                               radius=radio,
+                               segments=100,draw=FALSE))
+colnames(ellipse.mcd)=colnames(datos)
+fig2 = ggplot(data=datos,mapping=aes(x=peso_corporal, y=peso_corazon),
+              label=row.names(datos))+geom_point()+
+  geom_polygon(data=ellipse.cl, color= "dodgerblue",fill= "dodgerblue",
+               alpha=0.2)+geom_point(aes(x=cats.clcenter[1],
+                                         y= cats.clcenter[2]),
+                                     color="blue", size=6)+
+  geom_polygon(data=ellipse.mcd,color= "red", fill= "red",alpha=0.3)+
+  geom_point(aes(x=cats.mcd$center[1], y=
+                   cats.mcd$center[2]),color="red", size=6)
+```
+
+```{r}
+library(ggrepel)
+fig2 + geom_label_repel(aes(label= row.names(datos)),size= 3,
+                        box.padding=0.5,point.padding = 0.3,
+                        segment.color = 'grey50')+theme_classic()
+
+plot(cats.mcd, which="dd")
+
+row.names.data.frame(cats)
+
+```
+
+#### Se observa que los dos datos atipicos son el 31 y 144.
+
+#### Se ve que todos los datos van siguiendo una linea pero los datos atipicos estan muy alejados de los demas , si siguen la misma linea , pero mucho mas arriba.
