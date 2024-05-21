@@ -1,0 +1,133 @@
+---
+documentclass: article
+title: "Analisis de serie de tiempo"
+format: pdf
+editor: visual
+jupyter: python3
+Lang: ES-es
+---
+
+\tableofcontents
+
+\newpage
+
+\section{Analisis en yahoo}
+
+# Analisis en yahoo
+
+```{python}
+import yfinance as yf
+import pandas as pd
+```
+
+## Uso de la libreria yfinance para extraer datos de acciones
+
+Utilizando el método Ticker() podemos extraer información bursátil pasandole como parámetro las siglas identificativas de con las que a la empresa es identificada en la bolsa. Como ejemplo vamos a recuperar las acciones de la empresa Apple y cuyas siglas identificativas son AAPL.
+
+```{python}
+apple = yf.Ticker("AAPL")
+```
+
+### Información de acciones
+
+Usando el atributo info podemos extraer información de las acciones de Apple en un diccionario de Python.
+
+```{python}
+apple_info=apple.info
+apple_info #mostramos lo que tiene la variable
+```
+
+Como ya tenemos un diccionario, podemos extraer la información a partir del campo clave. Extraemos por ejemplo el país mediante la clave "country"
+
+```{python}
+apple_info['country']
+```
+
+## Uso yfinance para extraer datos históricos de precios de acciones
+
+Para realizar un análisis necesitamos extraer la evolución histórica de los indicadores principales (precio de apertura, máximo, mínimo, precio de cierre, etc.). Para ello usamos el método `history()`. Le podemos pasar como parámetro el periodo de tiempo cuyos datos queremos recoger. Las opciones para el período son 1 día (1d), 5d, 1 mes (1mo), 3mo, 6mo, 1 año (1y), 2y, 5y, 10y, ytd y max, este último (max) recoge el histórico completo desde la primera cotización en bolsa de la empresa.
+
+```{python}
+historico_apple = apple.history(period="max")
+print(historico_apple)
+```
+
+El formato en el que se devuelven los datos es un DataFrame de Pandas. Con la 'Fecha' como índice, la acción 'Open', 'High', 'Low', 'Close', 'Volume' y 'Stock Splits' que se dan para cada día. Haciendo uso de los métodos head() y tail() podremos ver las primeras líneas o las ultimas respectivamente. Como parámetro se les pasa el número de líneas a visualizar, si no se le proporciona este parámetro por defecto muestra cinco líneas.
+
+```{python}
+historico_apple.head()
+```
+
+Si queremos mostrar los diez primero registros de los datos de una sola columna; por ejemplo la columna de precio de la acción al cierre de la jornada.
+
+```{python}
+print(historico_apple["Close"].head(10))
+```
+
+Podemos restablecer el índice del DataFrame con la función reset_index. También establecemos el parámetro inplace en True para que el cambio tenga lugar en el propio DataFrame.
+
+```{python}
+historico_apple.reset_index(inplace=True)
+```
+
+Graficamos el precio al cierre por fecha. Usamos el campo close y el campo date:
+
+```{python}
+historico_apple.plot(x="Date", y="Close")
+```
+
+### Observamos que los precios desde 1980 hasta 2005 se mantuvieron en cero,luego comenzo a incrementar de manera lenta desde el 2006 hasta el 2015 y a partir del 2020 los precios incrementaron demasiado rapido. tambien se puede ver una prediccion en la que se puede saber que los precion van a seguir teniendo ese incremento brusco en el año 2025.
+
+## Uso de yfinance para extraer datos históricos de dividendos
+
+Los dividendos son la distribución de las ganancias de una empresa a los accionistas. En este caso, se definen como una cantidad de dinero devuelta por acción que posee un inversor. Usando la variable 'dividens' podemos obtener un DataFrame de los datos. El período de los datos viene dado por el período definido en la función "history".
+
+```{python}
+apple.dividends
+```
+
+podemos graficar los dividendos a lo largo del tiempo:
+
+```{python}
+apple.dividends.plot()
+```
+
+### Se observa que los dividendos semantuvieron en cero desde 1998 hasta 1996, luego tuvieron un incremento lento pero constante hasta el año 2012 y a partir de ahim hasta el año 2024 tuvieron un incremento lento pero escalado.
+
+# Ejercicio
+
+Con todo lo visto anteriormente, vamos a extraer los datos de una empresa española conocida, los mostramos y graficamos la evolución de los valores desde que empezó a cotizar en bolsa.
+
+```{python}
+inditex = yf.Ticker("ITX.MC")
+```
+
+## 1-Mostramos el país de la empresa.
+
+```{python}
+inditex_info=inditex.info
+inditex_info['country']
+```
+
+## 2-Mostramos el sector al que pertenece
+
+```{python}
+inditex_info['sector']
+```
+
+## 3-Extraemos el histórico desde que empezó a cotizar en bolsa y lo graficamos
+
+```{python}
+historico_inditex=inditex.history(period="max")
+print(historico_inditex)
+```
+
+```{python}
+historico_inditex.reset_index(inplace=True)
+```
+
+```{python}
+historico_inditex.plot(x="Date", y="Close")
+```
+
+### se observa como la bolsa tiene una tendencia positiva, lo cual hace que vaya incrementando con el pasar de los años, del 2016 al 2020 tiene una ciclicidad entre 30 y 20 cotizaciones de la bolsa aproximadamente y luego del 2023 se ve una tendencia demasiado rapida a incrementar hasta llegar al punto mas alto que es en el 2024. Esto debido a la recuperacion economica en españa despues de la pandemia.
